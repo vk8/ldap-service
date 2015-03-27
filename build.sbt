@@ -1,4 +1,4 @@
-name := """ldap-service"""
+name := """adservice"""
 
 version := "1.0-SNAPSHOT"
 
