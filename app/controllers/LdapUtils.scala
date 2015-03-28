@@ -21,10 +21,13 @@ import play.api.Logger
  * @author vasiliy
  */
 
-object AdUtils {
+object LdapUtils {
   val conf = ConfigFactory.load()
 
-  def getLdap(login: String = conf.getString("ldap.login"),
+  /**
+   * Getting ldap connection.
+   */
+  def getConnection(login: String = conf.getString("ldap.login"), 
               passw: String = conf.getString("ldap.passw")): Option[InitialLdapContext] = {
     val env = new Hashtable[String, String]()
     env.put(Context.PROVIDER_URL, conf.getString("ldap.url"))
@@ -41,13 +44,17 @@ object AdUtils {
     }
   }
 
-  def getLdapData: Option[NamingEnumeration[SearchResult]] = getLdap() match {
-    case Some(context) => Some(context.search(conf.getString("ldap.root"), conf.getString("ldap.filter"),
+  def getUsersData: Option[NamingEnumeration[SearchResult]] = getConnection() match {
+    case Some(connection) => Some(connection.search(conf.getString("ldap.root"), conf.getString("ldap.filter"),
       new SearchControls(SearchControls.SUBTREE_SCOPE, 0, 0, null, false, false)))
     case None => None
   }
 
-  def usefulAttributesFinder: List[(String, Set[String])] = getLdapData match {
+  /**
+   * Usefulness is determined by the unique attribute values.
+   * If the unique small (e.g. 1), it is likely that the attribute is not interesting.
+   */
+  def usefulAttributesFinder: List[(String, Set[String])] = getUsersData match {
     case Some(enumeration) =>
       var map = mutable.Map.empty[String, Set[String]]
       while (enumeration.hasMoreElements()) {
@@ -64,14 +71,6 @@ object AdUtils {
     case None => List.empty
   }
 
-  def printAttributesToFile(attributes: List[(String, Set[String])]) = {
-    val pw = new PrintWriter(new File("helloList.txt"))
-    pw.write(attributes.toString())
-    pw.close
-  }
-
-  def main(args: Array[String]) {
-    printAttributesToFile(usefulAttributesFinder)
-  }
+  def main(args: Array[String]) {}
 
 }

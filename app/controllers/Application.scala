@@ -1,10 +1,8 @@
 package controllers
 
-import play.api._
-import play.api.mvc._
-import java.util.Hashtable
-import javax.naming.Context
-import javax.naming.ldap.InitialLdapContext
+import play.api.mvc.Action
+import play.api.mvc.Controller
+import play.twirl.api.Html
 
 object Application extends Controller {
 
@@ -12,4 +10,8 @@ object Application extends Controller {
     Ok(views.html.index("Your new application is ready."))
   }
 
+  def allSortedLdapAttributes = Action {
+    Ok(Html(LdapUtils.usefulAttributesFinder.toString))
+  }
+  
 }
