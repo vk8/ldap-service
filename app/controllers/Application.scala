@@ -26,7 +26,17 @@ object Application extends Controller {
   }
 
   def allSortedLdapAttributes = Action {
-    Ok(Json.prettyPrint(Json.toJson(LdapUtils.usefulAttributesFinder)))
+    Ok(Json.toJson(LdapUtils.usefulAttributesFinder))
+  }
+
+  def attributesTableMergeOptions = Action {
+    Ok(Json.parse("""[{
+        "index" : 1,
+        "field" : "name",
+        "rowspan" : 4 },{
+        "index" : 5,
+        "field" : "name",
+        "rowspan" : 4 }]"""))
   }
 
   def listPlaces = Action {
