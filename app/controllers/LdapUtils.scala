@@ -1,10 +1,7 @@
 package controllers
 
-import java.io.File
-import java.io.PrintWriter
 import java.util.Hashtable
 
-import scala.annotation.migration
 import scala.collection.mutable
 
 import com.typesafe.config.ConfigFactory
@@ -27,8 +24,8 @@ object LdapUtils {
   /**
    * Getting ldap connection.
    */
-  def getConnection(login: String = conf.getString("ldap.login"), 
-              passw: String = conf.getString("ldap.passw")): Option[InitialLdapContext] = {
+  private def getConnection(login: String = conf.getString("ldap.login"),
+                            passw: String = conf.getString("ldap.passw")): Option[InitialLdapContext] = {
     val env = new Hashtable[String, String]()
     env.put(Context.PROVIDER_URL, conf.getString("ldap.url"))
     env.put(Context.SECURITY_PRINCIPAL, login)
@@ -44,8 +41,8 @@ object LdapUtils {
     }
   }
 
-  def getUsersData: Option[NamingEnumeration[SearchResult]] = getConnection() match {
-    case Some(connection) => Some(connection.search(conf.getString("ldap.root"), conf.getString("ldap.filter"),
+  private def getUsersData: Option[NamingEnumeration[SearchResult]] = getConnection() match {
+    case Some(connection) => Some(connection.search(conf.getString("ldap.users-root"), conf.getString("ldap.filter"),
       new SearchControls(SearchControls.SUBTREE_SCOPE, 0, 0, null, false, false)))
     case None => None
   }
@@ -71,6 +68,6 @@ object LdapUtils {
     case None => List.empty
   }
 
-  def main(args: Array[String]) {}
+  //def main(args: Array[String]) {}
 
 }
