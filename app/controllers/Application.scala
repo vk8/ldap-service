@@ -25,38 +25,52 @@ object Application extends Controller {
       "values" -> attribute._2)
   }
 
+  /*
+   * !! Correct sorting output is provided by size-sorting in LdapUtils.usefulAttributesFinder   
+   */
   def allSortedLdapAttributes = Action {
     Ok(Json.toJson(splittIntoPairs(LdapUtils.usefulAttributesFinder)))
   }
 
   def attributesTableMergeOptions = Action {
-    Ok(Json.parse("""[{
-        "index" : 1,
-        "field" : "name",
-        "rowspan" : 4 },{
-        "index" : 5,
-        "field" : "name",
-        "rowspan" : 4 }]"""))
+    Ok(xxx)
   }
 
   /*
    * Example explaining the transformation.
    * 
-   * Bafore:
+   * Before:
    * 
-   * List( (name,  Set(Boris, Nick, Petr, Ivan)), 
-   *        color, Set(red, green)) 
+   * List((name,  Set(Boris, Nick, Petr, Ivan)), 
+   *      (color, Set(red, green))) 
    * 
-   * After:
+   * After zipAll:
    * 
    * List( Set( (name, Biris), (name, Nick), (name, Petr), (name, Ivan)), 
    *       Set( (color, red), (color, green)))
    *       
+   * Result after flatten: 
+   * 
+   * List((name, Biris), (name, Nick), (name, Petr), (name, Ivan), (color, red), (color, green))
+   *    
    */
-  def splittIntoPairs(arg: List[(String, Set[String])]): List[Set[(String, String)]] =
-    for (item <- arg) yield Set(item._1) zipAll (item._2, item._1, "")
+  def splittIntoPairs(arg: List[(String, Set[String])]): List[(String, String)] =
+    (for (item <- arg) yield Set(item._1) zipAll (item._2, item._1, "")).flatten
 
   def main(args: Array[String]): Unit = {}
+
+  def xxx(): String = {
+    var str = "["
+    var count = 0
+    for (item <- LdapUtils.usefulAttributesFinder) {
+      str += "{\"index\" : " + count + ","
+      str += "\"field\" : \"name\","
+      str += "\"rowspan\" : " + item._2.size + "},"
+      count += item._2.size
+    }
+    str = str.substring(0, str.length() - 1)
+    str + "]"
+  }
 
   def listPlaces = Action {
     val json = Json.toJson(Place.list)

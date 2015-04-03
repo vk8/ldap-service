@@ -25,7 +25,7 @@
 			$('#attributes-table').bootstrapTable().on('load-success.bs.table', mergeCells)
 		});
 
-		function mergeCells2() {
+		function mergeCells() {
 			$.getJSON("/attributesTableMergeOptions", function(data) {
 				for ( var i in data)
 					$('#attributes-table').bootstrapTable('mergeCells', data[i])
