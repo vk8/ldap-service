@@ -51,7 +51,7 @@ object LdapUtils {
    * Usefulness is determined by the unique attribute values.
    * If the unique small (e.g. 1), it is likely that the attribute is not interesting.
    */
-  def usefulAttributesFinder: List[(String, Set[String])] = getUsersData match {
+  def usefulAttributesFinder: Map[String, Set[String]] = getUsersData match {
     case Some(enumeration) =>
       var map = mutable.Map.empty[String, Set[String]]
       while (enumeration.hasMoreElements()) {
@@ -59,15 +59,19 @@ object LdapUtils {
         while (user.hasMoreElements()) {
           val attr = user.next()
           val key = attr.getID
-          val value = attr.get.toString
-          val set = map.getOrElse(key, Set.empty) + value
+          val values = attr.getAll
+          var set = map.getOrElse(key, Set.empty)
+          while (values.hasMoreElements())
+            set += values.next().toString
           map += (key -> set)
         }
       }
-      map.toList.sortWith((x, y) => x._2.size < y._2.size)
-    case None => List.empty
+      map.toMap
+    case None => Map.empty
   }
 
-  //def main(args: Array[String]) {}
+  def main(args: Array[String]): Unit = {
+    LdapUtils.usefulAttributesFinder
+  }
 
 }

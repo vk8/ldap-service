@@ -26,14 +26,14 @@ object Application extends Controller {
   }
 
   /*
-   * !! Correct sorting output is provided by size-sorting in LdapUtils.usefulAttributesFinder   
+   * Correct sorting output is provided by size-sorting   
    */
   def allSortedLdapAttributes = Action {
-    Ok(Json.toJson(splittIntoPairs(LdapUtils.usefulAttributesFinder)))
+    Ok(Json.toJson(splittIntoPairs(LdapUtils.usefulAttributesFinder.toList.sortWith((x, y) => x._2.size < y._2.size))))
   }
 
   def attributesTableMergeOptions = Action {
-    Ok(xxx)
+    Ok(buildMergeOptions)
   }
 
   /*
@@ -57,12 +57,13 @@ object Application extends Controller {
   def splittIntoPairs(arg: List[(String, Set[String])]): List[(String, String)] =
     (for (item <- arg) yield Set(item._1) zipAll (item._2, item._1, "")).flatten
 
-  def main(args: Array[String]): Unit = {}
+  def main(args: Array[String]): Unit = {
+  }
 
-  def xxx(): String = {
+  def buildMergeOptions = {
     var str = "["
     var count = 0
-    for (item <- LdapUtils.usefulAttributesFinder) {
+    for (item <- LdapUtils.usefulAttributesFinder.toList.sortWith((x, y) => x._2.size < y._2.size)) {
       str += "{\"index\" : " + count + ","
       str += "\"field\" : \"name\","
       str += "\"rowspan\" : " + item._2.size + "},"
