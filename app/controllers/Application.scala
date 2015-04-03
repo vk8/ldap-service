@@ -19,14 +19,14 @@ object Application extends Controller {
     Ok(views.html.main())
   }
 
-  implicit val attributeWrites = new Writes[(String, Set[String])] {
-    def writes(attribute: (String, Set[String])) = Json.obj(
+  implicit val attributeWrites = new Writes[(String, String)] {
+    def writes(attribute: (String, String)) = Json.obj(
       "name" -> attribute._1,
       "values" -> attribute._2)
   }
 
   def allSortedLdapAttributes = Action {
-    Ok(Json.toJson(LdapUtils.usefulAttributesFinder))
+    Ok(Json.toJson(splittIntoPairs(LdapUtils.usefulAttributesFinder)))
   }
 
   def attributesTableMergeOptions = Action {
@@ -38,6 +38,25 @@ object Application extends Controller {
         "field" : "name",
         "rowspan" : 4 }]"""))
   }
+
+  /*
+   * Example explaining the transformation.
+   * 
+   * Bafore:
+   * 
+   * List( (name,  Set(Boris, Nick, Petr, Ivan)), 
+   *        color, Set(red, green)) 
+   * 
+   * After:
+   * 
+   * List( Set( (name, Biris), (name, Nick), (name, Petr), (name, Ivan)), 
+   *       Set( (color, red), (color, green)))
+   *       
+   */
+  def splittIntoPairs(arg: List[(String, Set[String])]): List[Set[(String, String)]] =
+    for (item <- arg) yield Set(item._1) zipAll (item._2, item._1, "")
+
+  def main(args: Array[String]): Unit = {}
 
   def listPlaces = Action {
     val json = Json.toJson(Place.list)
@@ -59,10 +78,6 @@ object Application extends Controller {
         Place.save(place)
         Ok(Json.obj("status" -> "OK", "message" -> ("Place '" + place.name + "' saved.")))
       })
-  }
-
-  def main(args: Array[String]): Unit = {
-
   }
 
   case class Location(lat: Double, long: Double)
