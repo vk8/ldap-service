@@ -3,11 +3,12 @@
 # ~~~~
 
 # Home page
-GET    /               controllers.Application.index
+GET    /                              controllers.Application.index
 
-GET    /all            controllers.Application.allSortedLdapAttributes
+GET    /allSortedLdapAttributes       controllers.Application.allSortedLdapAttributes
+GET    /attributesTableMergeOptions   controllers.Application.attributesTableMergeOptions
 
-POST   /places         controllers.Application.savePlace
+POST   /places                        controllers.Application.savePlace
 
 # Map static resources from the /public folder to the /assets URL path
-GET    /assets/*file   controllers.Assets.at(path="/public", file)
+GET    /assets/*file                  controllers.Assets.at(path="/public", file)
