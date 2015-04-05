@@ -51,27 +51,78 @@ object LdapUtils {
    * Usefulness is determined by the unique attribute values.
    * If the unique small (e.g. 1), it is likely that the attribute is not interesting.
    */
-  def usefulAttributesFinder: Map[String, Set[String]] = getUsersData match {
+  def usefulAttributesFinder: Map[String, mutable.Map[ValueAndMarkOfAssignment, Set[String]]] = getUsersData match {
     case Some(enumeration) =>
-      var map = mutable.Map.empty[String, Set[String]]
+      var map = mutable.Map.empty[String, mutable.Map[ValueAndMarkOfAssignment, Set[String]]]
       while (enumeration.hasMoreElements()) {
         val user = enumeration.next().getAttributes().getAll
+        var userName = ""
         while (user.hasMoreElements()) {
           val attr = user.next()
           val key = attr.getID
           val values = attr.getAll
-          var set = map.getOrElse(key, Set.empty)
-          while (values.hasMoreElements())
-            set += values.next().toString
-          map += (key -> set)
+          var valueMap = map.getOrElse(key, mutable.Map.empty)
+          while (values.hasMoreElements()) {
+            val v = values.next().toString
+            if (key == "cn") userName = v
+            valueMap.get(new ValueAndMarkOfAssignment(v)) match {
+              case Some(list) => {
+                val tmp = (new ValueAndMarkOfAssignment(v, false) -> list)
+                valueMap -= new ValueAndMarkOfAssignment(v)
+                valueMap += tmp
+              }
+              case None => valueMap += (new ValueAndMarkOfAssignment(v, false) -> Set.empty)
+            }
+          }
+          map += (key -> valueMap)
         }
+        for (item <- map)
+          for (it <- item._2)
+            if (!it._1.isUserAssigned) {
+              val set = it._2 + userName
+              map.get(item._1).get += (new ValueAndMarkOfAssignment(it._1.value) -> set)
+              it._1.isUserAssigned = true
+            }
       }
       map.toMap
     case None => Map.empty
   }
 
+
+  //Map[String, mutable.Map[ValueAndMarkOfAssignment, Set[String]]]
+  //List[(String, Set[String])]
+  //List((name, Biris)
+
+  /* 
+   * List((name,  Set(Boris, Nick, Petr, Ivan)), 
+   *      (color, Set(red, green))) 
+   * 
+   * After zipAll:
+   * 
+   * List( Set( (name, Biris), (name, Nick), (name, Petr), (name, Ivan)), 
+   *       Set( (color, red), (color, green)))
+   *       
+   * Result after flatten: 
+   * 
+   * List((name, Biris), (name, Nick), (name, Petr), (name, Ivan), (color, red), (color, green))
+   * 
+   *   def splittIntoPairs(arg: List[(String, Set[String])]): List[(String, String)] =
+    (for (item <- arg) yield Set(item._1) zipAll (item._2, item._1, "")).flatten
+   */
+
   def main(args: Array[String]): Unit = {
-    LdapUtils.usefulAttributesFinder
+    print(LdapUtils.usefulAttributesFinder)
   }
 
+}
+
+class ValueAndMarkOfAssignment(val value: String, var isUserAssigned: Boolean = true) {
+  override def equals(o: Any) = o match {
+    case that: ValueAndMarkOfAssignment => that.value.equals(this.value)
+    case _                              => false
+  }
+
+  override def toString() = value
+
+  override def hashCode() = value.hashCode()
 }
