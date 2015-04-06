@@ -1,5 +1,7 @@
 package controllers
 
+import scala.collection.mutable
+
 import play.api.libs.functional.syntax.functionalCanBuildApplicative
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.functional.syntax.unlift
@@ -19,21 +21,36 @@ object Application extends Controller {
     Ok(views.html.main())
   }
 
-  implicit val attributeWrites = new Writes[(String, String)] {
-    def writes(attribute: (String, String)) = Json.obj(
+  //  implicit val attributeWrites = new Writes[(String, String)] {
+  //    def writes(attribute: (String, String)) = Json.obj(
+  //      "name" -> attribute._1,
+  //      "values" -> attribute._2)
+  //  }
+
+  implicit val attributeWrites = new Writes[(String, X)] {
+    def writes(attribute: (String, X)) = Json.obj(
       "name" -> attribute._1,
-      "values" -> attribute._2)
+      "values" -> attribute._2.str, 
+      "size" -> attribute._2.list.size,
+      "peoples" -> attribute._2.list)
   }
 
   /*
-   * !! Correct sorting output is provided by size-sorting in LdapUtils.usefulAttributesFinder   
+   * Correct sorting output is provided by size-sorting   
    */
   def allSortedLdapAttributes = Action {
-    Ok(Json.toJson(splittIntoPairs(LdapUtils.usefulAttributesFinder)))
+    //Ok(Json.toJson(splittIntoPairs(LdapUtils.usefulAttributesFinder.toList.sortWith((x, y) => x._2.size < y._2.size))))
+    Ok(Json.toJson(mapToList(LdapUtils.usefulAttributesFinder.toList.sortWith((x, y) => x._2.size < y._2.size))))
   }
 
+  def mapToList(map: List[(String, mutable.Map[ValueAndMarkOfAssignment, Set[String]])]): List[(String, X)] =
+    for (item <- map; it <- item._2.keys) 
+      yield (item._1, new X(it.value, item._2.get(it).get.toList))
+    
+  class X(val str: String, val list: List[String])
+
   def attributesTableMergeOptions = Action {
-    Ok(xxx)
+    Ok(buildMergeOptions)
   }
 
   /*
@@ -52,17 +69,19 @@ object Application extends Controller {
    * Result after flatten: 
    * 
    * List((name, Biris), (name, Nick), (name, Petr), (name, Ivan), (color, red), (color, green))
-   *    
+   * 
+   * (String, mutable.Map[ValueAndMarkOfAssignment, Set[String]])   
    */
   def splittIntoPairs(arg: List[(String, Set[String])]): List[(String, String)] =
     (for (item <- arg) yield Set(item._1) zipAll (item._2, item._1, "")).flatten
 
-  def main(args: Array[String]): Unit = {}
+  def main(args: Array[String]): Unit = {
+  }
 
-  def xxx(): String = {
+  def buildMergeOptions = {
     var str = "["
     var count = 0
-    for (item <- LdapUtils.usefulAttributesFinder) {
+    for (item <- LdapUtils.usefulAttributesFinder.toList.sortWith((x, y) => x._2.size < y._2.size)) {
       str += "{\"index\" : " + count + ","
       str += "\"field\" : \"name\","
       str += "\"rowspan\" : " + item._2.size + "},"
